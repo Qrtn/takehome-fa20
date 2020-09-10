@@ -12,3 +12,50 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
     monospace;
 }
+
+.App {
+  margin: 20px;
+}
+
+.Restaurant, .addRestaurant {
+  padding: 7px 10px;
+}
+
+.App h3 {
+  margin: 10px 0;
+}
+
+.Restaurant .name {
+  font-weight: bold;
+}
+
+.addRestaurant input {
+  width: 175px;
+}
+
+.Counter, .addRestaurant button {
+  display: inline-block;
+  width: 50px;
+  margin: 0px 15px;
+}
+
+.Counter button {
+  background: none!important;
+  border: none;
+  padding: 0!important;
+  width: 15px;
+  font-size: 16px;
+  color: #069;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.Counter button:focus {
+  outline: 0;
+}
+
+.Counter .count {
+  display: inline-block;
+  width: 20px;
+  text-align: center;
+}

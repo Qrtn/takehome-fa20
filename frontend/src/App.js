@@ -20,7 +20,7 @@ class App extends Component {
     this.setState({ newName: value })
   }
 
-  handleNameSubmit = () => {
+  handleNameSubmit = (event) => {
     this.setState(({ restaurants, newestId, newName }) => ({
       restaurants: [...restaurants, {
         id: newestId + 1,
@@ -30,6 +30,9 @@ class App extends Component {
       newestId: newestId + 1,
       newName: ""
     }))
+
+    event.preventDefault()
+    return false
   }
 
   render() {
@@ -38,12 +41,19 @@ class App extends Component {
     return (
       <div className="App">
         <Instructions complete={true} />
+        <hr />
+
+        <h2>Parts 2&ndash;5</h2>
+        
+        <h3>Yelp4Impact</h3>
         {this.state.restaurants.map(x => (
           <Restaurant id={x.id} name={x.name} rating={x.rating} />
         ))}
 
-        <input value={newName} onChange={this.handleNameChange} />
-        <button type="button" onClick={this.handleNameSubmit}>Add Restaurant</button>
+        <form className="addRestaurant" onSubmit={this.handleNameSubmit}>
+          <button type="submit">Add</button>
+          <input value={newName} onChange={this.handleNameChange} placeholder="Restaurant name"/>
+        </form>
       </div>
     )
   }
