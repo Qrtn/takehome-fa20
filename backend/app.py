@@ -36,8 +36,9 @@ def create_response(
     return jsonify(response), status
 
 
-def validate_args(body: dict, required_args: List[Tuple[str, type]],
-    optional_args: List[Tuple[str, type]] = []) -> Tuple[Tuple[Response, int]]:
+def validate_args(
+    body: dict, required_args: List[Tuple[str, type]], optional_args: List[Tuple[str, type]] = []
+) -> Tuple[Tuple[Response, int]]:
     """Checks that required args are present, and that required and optional args are of
     the correct type. If so, returns body with coerced types. Otherwise, returns error
     response for Flask.
@@ -48,6 +49,9 @@ def validate_args(body: dict, required_args: List[Tuple[str, type]],
     :returns (coerced data, (tuple of Flask Response and int, which is what flask expects for a
         response))
     """
+
+    if body is None:
+        return None, create_response(status=422, message='Missing body')
 
     missing_args = []
     invalid_args = []
@@ -74,17 +78,11 @@ def validate_args(body: dict, required_args: List[Tuple[str, type]],
         error_msg = ''
 
         if missing_args:
-            error_msg += f'missing args: {", ".join(missing_args)}   '
+            error_msg += f'Missing args: {", ".join(missing_args)}   '
         if invalid_args:
-            error_msg += f'invalid args: {", ".join(invalid_args)}'
+            error_msg += f'Invalid args: {", ".join(invalid_args)}'
 
-        status = 422
-        error = {
-            'code': status,
-            'message': error_msg
-        }
-
-        return None, (error, status)
+        return None, create_response(status=422, message=error_msg)
 
     return coerced_body, None
 
@@ -128,13 +126,13 @@ def new_restaurant():
         return error
 
     restaurant = db.create('restaurants', body)
-    return create_response(restaurant)
+    return create_response(restaurant, status=201)
 
 
 # Part 2
-@app.route("/restaurants/<id>", methods=['GET'])
+@app.route("/restaurants/<int:id>", methods=['GET'])
 def get_restaurant(id):
-    restaurant = db.getById('restaurants', int(id))
+    restaurant = db.getById('restaurants', id)
     if restaurant is None:
         return create_response(status=404, message="No restaurant with this id exists")
 
@@ -142,22 +140,25 @@ def get_restaurant(id):
 
 
 # Part 5
-@app.route("/restaurants/<id>", methods=['PUT'])
+@app.route("/restaurants/<int:id>", methods=['PUT'])
 def update_restaurant(id):
     body, error = validate_args(request.json, [], [('name', str), ('rating', int)])
     if error:
         return error
 
-    restaurant = db.create('restaurants', body)
+    restaurant = db.updateById('restaurants', id, body)
+    if restaurant is None:
+        return create_response(status=404, message="No restaurant with this id exists")
+
     return create_response(restaurant)
 
 
 # Part 6
-@app.route("/restaurants/<id>", methods=['DELETE'])
+@app.route("/restaurants/<int:id>", methods=['DELETE'])
 def delete_restaurant(id):
-    if db.getById('restaurants', int(id)) is None:
+    if db.getById('restaurants', id) is None:
         return create_response(status=404, message="No restaurant with this id exists")
-    db.deleteById('restaurants', int(id))
+    db.deleteById('restaurants', id)
     return create_response(message="Restaurant deleted")
 
 
