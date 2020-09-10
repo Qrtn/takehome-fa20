@@ -39,7 +39,8 @@ def create_response(
 def validate_args(body: dict, required_args: List[Tuple[str, type]],
     optional_args: List[Tuple[str, type]] = []) -> Tuple[Tuple[Response, int]]:
     """Checks that required args are present, and that required and optional args are of
-    the correct type. If so, returns body with coerced types. Otherwise, returns error response for Flask.
+    the correct type. If so, returns body with coerced types. Otherwise, returns error
+    response for Flask.
 
     :param body <dict> args body
     :param required_args <list> list of (arg, type) which are required to be in body
@@ -56,24 +57,26 @@ def validate_args(body: dict, required_args: List[Tuple[str, type]],
     for arg, type_ in required_args:
         if arg not in body or not body[arg]:
             missing_args.append(arg)
-        elif not isinstance(arg, type_):
-            invalid_args.append(arg)
         else:
-            coerced_body[arg] = type_(body[arg]) 
+            try:
+                coerced_body[arg] = type_(body[arg]) 
+            except:
+                invalid_args.append(arg)
 
     for arg, type_ in optional_args:
-        if not isinstance(arg, type_):
-            invalid_args.append(arg)
-        else:
-            coerced_body[arg] = type_(body[arg]) 
+        if arg in body:
+            try:
+                coerced_body[arg] = type_(body[arg]) 
+            except:
+                invalid_args.append(arg)
 
     if missing_args or invalid_args:
         error_msg = ''
 
         if missing_args:
-            error_msg += f'missing args {", ".join(missing_args)}'
+            error_msg += f'missing args: {", ".join(missing_args)}   '
         if invalid_args:
-            error_msg += f'; invalid args {", ".join(invalid_args)}'
+            error_msg += f'invalid args: {", ".join(invalid_args)}'
 
         status = 422
         error = {
@@ -104,8 +107,13 @@ def mirror(name):
 # Parts 1 & 3
 @app.route("/restaurants", methods=['GET'])
 def get_all_restaurants():
+    args, error = validate_args(request.args, [], [('minRating', int)])
+    if error:
+        return error
+
     restaurants = db.get('restaurants')
-    minRating = request.args.get('minRating')
+    minRating = args.get('minRating', 0)
+
     filtered_restaurants = [restaurant for restaurant in restaurants if \
         restaurant['rating'] >= minRating]
 
