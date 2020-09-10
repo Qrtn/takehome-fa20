@@ -1,11 +1,25 @@
 import React, { Component } from 'react'
 
 class Counter extends Component {
-  // YOUR CODE GOES BELOW
+  state = {
+    count: this.props.count
+  }
+
+  handleIncrement = () => {
+    this.setState(({ count }) => ({count: count + 1}))
+  }
+
+  handleDecrement = () => {
+    this.setState(({ count }) => ({count: count - 1}))
+  }
   
   render() {
     return (
-      <div/> 
+      <div>
+        {this.state.count}
+        <button onClick={this.handleIncrement}>+</button>
+        <button onClick={this.handleDecrement}>-</button>
+      </div>
     )
   }
 }

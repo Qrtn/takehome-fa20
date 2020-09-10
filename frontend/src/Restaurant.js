@@ -2,11 +2,15 @@ import React, { Component } from 'react'
 import Counter from './Counter'
 
 class App extends Component {
-  // YOUR CODE GOES BELOW
-  
   render() {
+    const { name, rating } = this.props;
+
     return (
-      <div/> 
+      <div>
+        <span>{name}</span>
+        
+        <Counter count={parseInt(rating)} />
+      </div>
     )
   }
 }
