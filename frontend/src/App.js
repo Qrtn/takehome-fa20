@@ -52,7 +52,7 @@ class App extends Component {
 
         <form className="addRestaurant" onSubmit={this.handleNameSubmit}>
           <button type="submit">Add</button>
-          <input value={newName} onChange={this.handleNameChange} placeholder="Restaurant name"/>
+          <input value={newName} onChange={this.handleNameChange} placeholder="Restaurant name" />
         </form>
       </div>
     )
