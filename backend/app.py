@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, List
 
 from flask import Flask, jsonify, request, Response
 import mockdb.mockdb_interface as db
@@ -36,6 +36,55 @@ def create_response(
     return jsonify(response), status
 
 
+def validate_args(body: dict, required_args: List[Tuple[str, type]],
+    optional_args: List[Tuple[str, type]] = []) -> Tuple[Tuple[Response, int]]:
+    """Checks that required args are present, and that required and optional args are of
+    the correct type. If so, returns body with coerced types. Otherwise, returns error response for Flask.
+
+    :param body <dict> args body
+    :param required_args <list> list of (arg, type) which are required to be in body
+    :param optional_args <list> list of (arg, type) which can be in body
+    :returns (coerced data, (tuple of Flask Response and int, which is what flask expects for a
+        response))
+    """
+
+    missing_args = []
+    invalid_args = []
+
+    coerced_body = {}
+
+    for arg, type_ in required_args:
+        if arg not in body or not body[arg]:
+            missing_args.append(arg)
+        elif not isinstance(arg, type_):
+            invalid_args.append(arg)
+        else:
+            coerced_body[arg] = type_(body[arg]) 
+
+    for arg, type_ in optional_args:
+        if not isinstance(arg, type_):
+            invalid_args.append(arg)
+        else:
+            coerced_body[arg] = type_(body[arg]) 
+
+    if missing_args or invalid_args:
+        error_msg = ''
+
+        if missing_args:
+            error_msg += f'missing args {", ".join(missing_args)}'
+        if invalid_args:
+            error_msg += f'; invalid args {", ".join(invalid_args)}'
+
+        status = 422
+        error = {
+            'code': status,
+            'message': error_msg
+        }
+
+        return None, (error, status)
+
+    return coerced_body, None
+
 """
 ~~~~~~~~~~~~ API ~~~~~~~~~~~~
 """
@@ -45,15 +94,57 @@ def create_response(
 def hello_world():
     return create_response({"content": "hello world!"})
 
+
 @app.route("/mirror/<name>")
 def mirror(name):
     data = {"name": name}
     return create_response(data)
 
+
+# Parts 1 & 3
 @app.route("/restaurants", methods=['GET'])
 def get_all_restaurants():
-    return create_response({"restaurants": db.get('restaurants')})
+    restaurants = db.get('restaurants')
+    minRating = request.args.get('minRating')
+    filtered_restaurants = [restaurant for restaurant in restaurants if \
+        restaurant['rating'] >= minRating]
 
+    return create_response({"restaurants": filtered_restaurants})
+
+
+# Part 4
+@app.route("/restaurants", methods=['POST'])
+def new_restaurant():
+    body, error = validate_args(request.json, [('name', str), ('rating', int)])
+    if error:
+        return error
+
+    restaurant = db.create('restaurants', body)
+    return create_response(restaurant)
+
+
+# Part 2
+@app.route("/restaurants/<id>", methods=['GET'])
+def get_restaurant(id):
+    restaurant = db.getById('restaurants', int(id))
+    if restaurant is None:
+        return create_response(status=404, message="No restaurant with this id exists")
+
+    return create_response(restaurant)
+
+
+# Part 5
+@app.route("/restaurants/<id>", methods=['PUT'])
+def update_restaurant(id):
+    body, error = validate_args(request.json, [], [('name', str), ('rating', int)])
+    if error:
+        return error
+
+    restaurant = db.create('restaurants', body)
+    return create_response(restaurant)
+
+
+# Part 6
 @app.route("/restaurants/<id>", methods=['DELETE'])
 def delete_restaurant(id):
     if db.getById('restaurants', int(id)) is None:
@@ -61,8 +152,6 @@ def delete_restaurant(id):
     db.deleteById('restaurants', int(id))
     return create_response(message="Restaurant deleted")
 
-
-# TODO: Implement the rest of the API here!
 
 """
 ~~~~~~~~~~~~ END API ~~~~~~~~~~~~
